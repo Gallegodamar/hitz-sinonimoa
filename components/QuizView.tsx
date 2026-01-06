@@ -116,10 +116,20 @@ const QuizView: React.FC<QuizViewProps> = ({ gameState, onOptionToggle, onCheck,
             <div className="text-sm font-bold mb-1">
               {isWinning ? 'Bikain! Asmatu duzu!' : 'Kasik! Begiratu erantzunak.'}
             </div>
-            <div className="flex flex-wrap justify-center gap-x-2 text-[10px] md:text-xs">
-              <span className="font-bold underline">{gameState.currentWord.hitza}:</span>
+            <div className="flex flex-wrap justify-center gap-x-1.5 text-[10px] md:text-xs">
+              <span className="font-bold underline decoration-indigo-300 text-indigo-900">{gameState.currentWord.hitza}:</span>
               {gameState.currentWord.sinonimoak.map((sin, idx) => (
-                <span key={idx} className="opacity-80">{sin}{idx < gameState.currentWord!.sinonimoak.length - 1 ? ',' : ''}</span>
+                <React.Fragment key={idx}>
+                  <a 
+                    href={`https://hiztegiak.elhuyar.eus/eu/${sin}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline decoration-dotted hover:text-indigo-600 transition-colors"
+                  >
+                    {sin}
+                  </a>
+                  {idx < gameState.currentWord!.sinonimoak.length - 1 && <span className="opacity-40">,</span>}
+                </React.Fragment>
               ))}
             </div>
           </div>
