@@ -7,9 +7,62 @@ interface QuizViewProps {
   onOptionToggle: (id: string) => void;
   onCheck: () => void;
   onNext: () => void;
+  sessionInfo?: {
+    remaining: number;
+    hits: number;
+    misses: number;
+    total: number;
+  };
+  onRestartSession?: () => void;
 }
 
-const QuizView: React.FC<QuizViewProps> = ({ gameState, onOptionToggle, onCheck, onNext }) => {
+const QuizView: React.FC<QuizViewProps> = ({ 
+  gameState, 
+  onOptionToggle, 
+  onCheck, 
+  onNext, 
+  sessionInfo,
+  onRestartSession
+}) => {
+  
+  // Finish screen for session mode
+  if (!gameState.currentWord && sessionInfo) {
+    const score = Math.round((sessionInfo.hits / sessionInfo.total) * 100);
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-500">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-amber-100 text-amber-600 rounded-full mb-4">
+            <i className="fas fa-graduation-cap text-4xl"></i>
+          </div>
+          <h2 className="text-3xl font-black text-slate-900">Saioa amaitu da!</h2>
+          <p className="text-slate-500">Klaseko hitz guztiak landu dituzu.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 text-center shadow-sm">
+            <div className="text-3xl font-black text-green-600">{sessionInfo.hits}</div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase">Aciertos</div>
+          </div>
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 text-center shadow-sm">
+            <div className="text-3xl font-black text-red-500">{sessionInfo.misses}</div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase">Errores</div>
+          </div>
+          <div className="col-span-2 bg-indigo-600 p-6 rounded-3xl text-center shadow-lg">
+            <div className="text-3xl font-black text-white">{score}%</div>
+            <div className="text-[10px] font-bold text-indigo-200 uppercase">Zehaztasuna</div>
+          </div>
+        </div>
+
+        <button 
+          onClick={onRestartSession}
+          className="px-12 py-4 bg-slate-900 text-white font-black rounded-2xl shadow-xl hover:bg-slate-800 transition-all transform active:scale-95"
+        >
+          Berriro hasi
+        </button>
+      </div>
+    );
+  }
+
   if (!gameState.currentWord) return null;
 
   const correctCount = gameState.options.filter(o => o.isCorrect).length;
@@ -17,6 +70,26 @@ const QuizView: React.FC<QuizViewProps> = ({ gameState, onOptionToggle, onCheck,
 
   return (
     <div className="h-full flex flex-col animate-in fade-in duration-500 overflow-hidden">
+      {/* Session Progress Header */}
+      {sessionInfo && (
+        <div className="shrink-0 flex items-center justify-between mb-4 bg-white/50 backdrop-blur px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="flex items-center space-x-2">
+            <i className="fas fa-layer-group text-amber-500 text-xs"></i>
+            <span className="text-xs font-black text-slate-600">Gelditzen dira: {sessionInfo.remaining + 1}</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1">
+              <i className="fas fa-check-circle text-green-500 text-xs"></i>
+              <span className="text-xs font-black text-green-700">{sessionInfo.hits}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <i className="fas fa-times-circle text-red-400 text-xs"></i>
+              <span className="text-xs font-black text-red-700">{sessionInfo.misses}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header compact */}
       <div className="shrink-0 text-center space-y-2 mb-4">
         <h2 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Aurkitu honen sinonimoak:</h2>

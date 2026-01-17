@@ -20,6 +20,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
+            overscroll-behavior-y: contain;
         }
     </style>
 <script type="importmap">
@@ -31,15 +32,25 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
     <script>
+      // Registro de Service Worker más robusto para entornos de preview
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker registrado', reg))
-            .catch(err => console.error('Error al registrar Service Worker', err));
+          // Detectar si estamos en un entorno de sandbox/preview que suele dar problemas de origen
+          const isSandboxed = window.location.hostname.includes('usercontent.goog') || 
+                             window.location.hostname.includes('ai.studio');
+          
+          if (!isSandboxed) {
+            navigator.serviceWorker.register('./sw.js')
+              .then(reg => console.log('Service Worker registrado correctamente'))
+              .catch(err => console.warn('Service Worker no soportado en este entorno local:', err.message));
+          } else {
+            console.log('Modo Sandbox detectado: Saltando registro de Service Worker para evitar errores de origen.');
+          }
         });
       }
     </script>

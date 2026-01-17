@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { GameState, ViewMode, SynonymItem } from './types';
-import { generateRound } from './utils';
+import { generateRound, shuffleArray } from './utils';
 import QuizView from './components/QuizView';
 import BrowseView from './components/BrowseView';
 import StatsView from './components/StatsView';
@@ -11,10 +11,15 @@ import Navbar from './components/Navbar';
 const App: React.FC = () => {
   const [view, setView] = useState<ViewMode>('quiz');
   const [staticData, setStaticData] = useState<SynonymItem[]>([]);
+  const [classData, setClassData] = useState<SynonymItem[]>([]);
   const [localData, setLocalData] = useState<SynonymItem[]>([]);
   const [editingWord, setEditingWord] = useState<SynonymItem | null>(null);
   const [loading, setLoading] = useState(true);
   
+  // Class mode session state
+  const [classQueue, setClassQueue] = useState<SynonymItem[]>([]);
+  const [classSessionStats, setClassSessionStats] = useState({ hits: 0, misses: 0, totalSession: 0 });
+
   const [gameState, setGameState] = useState<GameState>({
     currentWord: null,
     options: [],
@@ -24,17 +29,24 @@ const App: React.FC = () => {
     selectedIds: []
   });
 
-  // Load both external JSON and local storage
+  // Load external JSONs and local storage
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch('./synonyms.json');
-        const data = await response.json();
-        setStaticData(data);
+        const [resAll, resClass] = await Promise.all([
+          fetch('./synonyms.json'),
+          fetch('./class_synonyms.json')
+        ]);
+        
+        const dataAll = (await resAll.json()) as SynonymItem[];
+        const dataClass = (await resClass.json()) as SynonymItem[];
+        
+        setStaticData(dataAll);
+        setClassData(dataClass);
 
         const saved = localStorage.getItem('user_synonyms');
         if (saved) {
-          setLocalData(JSON.parse(saved));
+          setLocalData(JSON.parse(saved) as SynonymItem[]);
         }
       } catch (e) {
         console.error("Datuak kargatzean errorea:", e);
@@ -61,8 +73,27 @@ const App: React.FC = () => {
   }, [staticData, localData]);
 
   const startNewRound = useCallback((specificWord?: SynonymItem) => {
-    if (allWords.length === 0) return;
-    const { word, options } = generateRound(allWords, specificWord);
+    let targetWord: SynonymItem | undefined = specificWord;
+    let pool = allWords;
+
+    if (view === 'class') {
+      pool = classData;
+      if (!targetWord) {
+        if (classQueue.length > 0) {
+          const newQueue = [...classQueue];
+          targetWord = newQueue.shift();
+          setClassQueue(newQueue);
+        } else {
+          // Sesión terminada
+          setGameState(prev => ({ ...prev, currentWord: null }));
+          return;
+        }
+      }
+    }
+
+    if (pool.length === 0 && !targetWord) return;
+
+    const { word, options } = generateRound(pool, targetWord);
     setGameState(prev => ({
       ...prev,
       currentWord: word,
@@ -70,13 +101,34 @@ const App: React.FC = () => {
       checked: false,
       selectedIds: []
     }));
-  }, [allWords]);
+  }, [allWords, classData, classQueue, view]);
 
+  // Initialize class session: Shuffle everything and start first word
+  const initClassSession = useCallback(() => {
+    if (classData.length === 0) return;
+    const shuffled = shuffleArray(classData);
+    const first = shuffled.shift()!;
+    setClassQueue(shuffled);
+    setClassSessionStats({ hits: 0, misses: 0, totalSession: classData.length });
+    
+    const { word, options } = generateRound(classData, first);
+    setGameState(prev => ({
+      ...prev,
+      currentWord: word,
+      options,
+      checked: false,
+      selectedIds: []
+    }));
+  }, [classData]);
+
+  // View switch handling
   useEffect(() => {
-    if (!gameState.currentWord && allWords.length > 0) {
+    if (view === 'class') {
+      initClassSession();
+    } else if (view === 'quiz') {
       startNewRound();
     }
-  }, [allWords, gameState.currentWord, startNewRound]);
+  }, [view, initClassSession]);
 
   const handleOptionToggle = (id: string) => {
     if (gameState.checked) return;
@@ -85,14 +137,24 @@ const App: React.FC = () => {
       selectedIds: prev.selectedIds.includes(id)
         ? prev.selectedIds.filter(i => i !== id)
         : [...prev.selectedIds, id]
-    }));
+      }));
   };
 
   const checkAnswer = () => {
+    if (!gameState.currentWord) return;
+
     const correctIds = gameState.options.filter(o => o.isCorrect).map(o => o.id);
     const selectedAreAllCorrect = 
       gameState.selectedIds.length === correctIds.length &&
       gameState.selectedIds.every(id => correctIds.includes(id));
+
+    if (view === 'class') {
+      setClassSessionStats(prev => ({
+        ...prev,
+        hits: selectedAreAllCorrect ? prev.hits + 1 : prev.hits,
+        misses: !selectedAreAllCorrect ? prev.misses + 1 : prev.misses
+      }));
+    }
 
     setGameState(prev => ({
       ...prev,
@@ -137,14 +199,21 @@ const App: React.FC = () => {
     <div className="h-dvh flex flex-col bg-slate-50 overflow-hidden">
       <Navbar currentView={view} setView={(v) => { setView(v); setEditingWord(null); }} />
       
-      <main className="flex-1 overflow-hidden flex flex-col">
+      <main className="flex-1 overflow-hidden flex flex-col relative">
         <div className="flex-1 w-full max-w-4xl mx-auto flex flex-col px-4 pt-4 pb-20 md:pb-4 overflow-hidden">
-          {view === 'quiz' && (
+          {(view === 'quiz' || view === 'class') && (
             <QuizView 
               gameState={gameState}
               onOptionToggle={handleOptionToggle}
               onCheck={checkAnswer}
               onNext={() => startNewRound()}
+              sessionInfo={view === 'class' ? {
+                remaining: classQueue.length,
+                hits: classSessionStats.hits,
+                misses: classSessionStats.misses,
+                total: classSessionStats.totalSession
+              } : undefined}
+              onRestartSession={view === 'class' ? initClassSession : undefined}
             />
           )}
           
@@ -187,7 +256,14 @@ const App: React.FC = () => {
           className={`flex flex-col items-center space-y-1 transition-colors ${view === 'quiz' ? 'text-indigo-600' : 'text-slate-400'}`}
         >
           <i className="fas fa-gamepad text-lg"></i>
-          <span className="text-[10px] font-bold">Jolastu</span>
+          <span className="text-[10px] font-bold">Denak</span>
+        </button>
+        <button 
+          onClick={() => setView('class')}
+          className={`flex flex-col items-center space-y-1 transition-colors ${view === 'class' ? 'text-amber-600' : 'text-slate-400'}`}
+        >
+          <i className="fas fa-graduation-cap text-lg"></i>
+          <span className="text-[10px] font-bold">Klasekoak</span>
         </button>
         <button 
           onClick={() => setView('browse')}

@@ -20,4 +20,4 @@ export interface Option {
   isCorrect: boolean;
 }
 
-export type ViewMode = 'quiz' | 'browse' | 'stats' | 'add';
+export type ViewMode = 'quiz' | 'browse' | 'stats' | 'add' | 'class';

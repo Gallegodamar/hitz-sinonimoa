@@ -20,12 +20,18 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setView }) => {
           </span>
         </div>
         
-        <div className="hidden md:flex items-center space-x-2">
+        <div className="hidden md:flex items-center space-x-1">
           <button 
             onClick={() => setView('quiz')}
             className={`text-xs font-bold px-3 py-2 rounded-lg transition-all ${currentView === 'quiz' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            Jolastu
+            Jolastu Denekin
+          </button>
+          <button 
+            onClick={() => setView('class')}
+            className={`text-xs font-bold px-3 py-2 rounded-lg transition-all ${currentView === 'class' ? 'text-amber-600 bg-amber-50' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <i className="fas fa-graduation-cap mr-1"></i> Klasekoak
           </button>
           <button 
             onClick={() => setView('browse')}
