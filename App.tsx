@@ -13,7 +13,8 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewMode>('home');
   const [classSubMode, setClassSubMode] = useState<ClassSubMode>('all');
   const [staticData, setStaticData] = useState<SynonymItem[]>([]);
-  const [staticClassData, setStaticClassData] = useState<SynonymItem[]>([]);
+  const [staticClassData1, setStaticClassData1] = useState<SynonymItem[]>([]);
+  const [staticClassData2, setStaticClassData2] = useState<SynonymItem[]>([]);
   const [localData, setLocalData] = useState<SynonymItem[]>([]);
   const [editingWord, setEditingWord] = useState<SynonymItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,16 +34,19 @@ const App: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [resAll, resClass] = await Promise.all([
+        const [resAll, resClass1, resClass2] = await Promise.all([
           fetch('./synonyms.json'),
-          fetch('./class_synonyms.json')
+          fetch('./class_synonyms.json'),
+          fetch('./class_synonyms_2.json')
         ]);
         
         const dataAll = (await resAll.json()) as SynonymItem[];
-        const dataClass = (await resClass.json()) as SynonymItem[];
+        const dataClass1 = (await resClass1.json()) as SynonymItem[];
+        const dataClass2 = (await resClass2.json()) as SynonymItem[];
         
         setStaticData(dataAll);
-        setStaticClassData(dataClass);
+        setStaticClassData1(dataClass1);
+        setStaticClassData2(dataClass2);
 
         const saved = localStorage.getItem('user_synonyms');
         if (saved) {
@@ -60,24 +64,30 @@ const App: React.FC = () => {
   const allWordsPool = useMemo(() => {
     const poolMap = new Map<string, SynonymItem>();
     staticData.forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
+    staticClassData1.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+    staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
     localData.forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
     return Array.from(poolMap.values());
-  }, [staticData, localData]);
+  }, [staticData, staticClassData1, staticClassData2, localData]);
 
   const currentClassPool = useMemo(() => {
     if (classSubMode === 'first') {
-      return staticClassData.map(item => ({ ...item, isClass: true }));
+      return staticClassData1.map(item => ({ ...item, isClass: true }));
     }
     
     if (classSubMode === 'second') {
-      return localData.filter(i => i.isClass);
+      const poolMap = new Map<string, SynonymItem>();
+      staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+      localData.filter(i => i.isClass).forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
+      return Array.from(poolMap.values());
     }
 
     const poolMap = new Map<string, SynonymItem>();
-    staticClassData.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+    staticClassData1.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+    staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
     localData.filter(i => i.isClass).forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
     return Array.from(poolMap.values());
-  }, [staticClassData, localData, classSubMode]);
+  }, [staticClassData1, staticClassData2, localData, classSubMode]);
 
   const startNewRound = useCallback((specificWord?: SynonymItem) => {
     let targetWord: SynonymItem | undefined = specificWord;
@@ -96,7 +106,6 @@ const App: React.FC = () => {
 
     if (targetPool.length === 0 && !targetWord) return;
 
-    // IMPORTANTE: Siempre usamos allWordsPool como distractorPool para evitar bloqueos si la lista es pequeña
     const { word, options } = generateRound(targetPool, targetWord, allWordsPool);
     
     setGameState(prev => ({
@@ -110,17 +119,23 @@ const App: React.FC = () => {
 
   const initClassSession = useCallback((subMode: ClassSubMode) => {
     let pool: SynonymItem[] = [];
-    if (subMode === 'first') pool = staticClassData.map(item => ({ ...item, isClass: true }));
-    else if (subMode === 'second') pool = localData.filter(i => i.isClass);
-    else {
+    if (subMode === 'first') {
+      pool = staticClassData1.map(item => ({ ...item, isClass: true }));
+    } else if (subMode === 'second') {
       const poolMap = new Map<string, SynonymItem>();
-      staticClassData.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+      staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+      localData.filter(i => i.isClass).forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
+      pool = Array.from(poolMap.values());
+    } else {
+      const poolMap = new Map<string, SynonymItem>();
+      staticClassData1.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+      staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
       localData.filter(i => i.isClass).forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
       pool = Array.from(poolMap.values());
     }
 
     if (pool.length === 0) {
-      alert("Zerrenda hau hutsik dago! Gehitu hitzen bat lehenago.");
+      alert("Zerrenda hau hutsik dago!");
       setView('home');
       return;
     }
@@ -130,7 +145,6 @@ const App: React.FC = () => {
     setClassQueue(shuffled);
     setClassSessionStats({ hits: 0, misses: 0, totalSession: pool.length });
     
-    // Generar primera ronda de la sesión escolar
     const { word, options } = generateRound(pool, first, allWordsPool);
     
     setGameState(prev => ({
@@ -140,14 +154,13 @@ const App: React.FC = () => {
       checked: false,
       selectedIds: []
     }));
-  }, [staticClassData, localData, allWordsPool]);
+  }, [staticClassData1, staticClassData2, localData, allWordsPool]);
 
-  // Solo disparamos el inicio automático si no venimos de una selección manual (home)
   useEffect(() => {
     if (view === 'quiz') {
       startNewRound();
     }
-  }, [view]);
+  }, [view, startNewRound]);
 
   const handleOptionToggle = (id: string) => {
     if (gameState.checked) return;
