@@ -25,37 +25,36 @@ const QuizView: React.FC<QuizViewProps> = ({
   onRestartSession
 }) => {
   
-  // Finish screen for session mode
   if (!gameState.currentWord && sessionInfo) {
     const score = Math.round((sessionInfo.hits / sessionInfo.total) * 100);
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-500">
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-amber-100 text-amber-600 rounded-full mb-4">
-            <i className="fas fa-graduation-cap text-4xl"></i>
+      <div className="h-full flex flex-col items-center justify-center space-y-6 animate-in fade-in zoom-in duration-500 px-4">
+        <div className="text-center space-y-1">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 text-amber-600 rounded-full mb-2">
+            <i className="fas fa-graduation-cap text-3xl"></i>
           </div>
-          <h2 className="text-3xl font-black text-slate-900">Saioa amaitu da!</h2>
-          <p className="text-slate-500">Klaseko hitz guztiak landu dituzu.</p>
+          <h2 className="text-2xl font-black text-slate-900">Saioa amaitu da!</h2>
+          <p className="text-sm text-slate-500">Zorionak! Hitz guztiak errepasatu dituzu.</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 text-center shadow-sm">
-            <div className="text-3xl font-black text-green-600">{sessionInfo.hits}</div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase">Aciertos</div>
+        <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 text-center shadow-sm">
+            <div className="text-2xl font-black text-green-600">{sessionInfo.hits}</div>
+            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Asmatuak</div>
           </div>
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 text-center shadow-sm">
-            <div className="text-3xl font-black text-red-500">{sessionInfo.misses}</div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase">Errores</div>
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 text-center shadow-sm">
+            <div className="text-2xl font-black text-red-500">{sessionInfo.misses}</div>
+            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Hutsak</div>
           </div>
-          <div className="col-span-2 bg-indigo-600 p-6 rounded-3xl text-center shadow-lg">
-            <div className="text-3xl font-black text-white">{score}%</div>
-            <div className="text-[10px] font-bold text-indigo-200 uppercase">Zehaztasuna</div>
+          <div className="col-span-2 bg-indigo-600 p-4 rounded-2xl text-center shadow-lg">
+            <div className="text-2xl font-black text-white">{score}%</div>
+            <div className="text-[9px] font-bold text-indigo-200 uppercase tracking-widest">Zehaztasuna</div>
           </div>
         </div>
 
         <button 
           onClick={onRestartSession}
-          className="px-12 py-4 bg-slate-900 text-white font-black rounded-2xl shadow-xl hover:bg-slate-800 transition-all transform active:scale-95"
+          className="w-full max-w-xs py-4 bg-slate-900 text-white font-black rounded-xl shadow-xl hover:bg-slate-800 transition-all transform active:scale-95"
         >
           Berriro hasi
         </button>
@@ -70,79 +69,69 @@ const QuizView: React.FC<QuizViewProps> = ({
 
   return (
     <div className="h-full flex flex-col animate-in fade-in duration-500 overflow-hidden">
-      {/* Session Progress Header */}
+      {/* Mini Progress - Only in Session Mode */}
       {sessionInfo && (
-        <div className="shrink-0 flex items-center justify-between mb-4 bg-white/50 backdrop-blur px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center space-x-2">
-            <i className="fas fa-layer-group text-amber-500 text-xs"></i>
-            <span className="text-xs font-black text-slate-600">Gelditzen dira: {sessionInfo.remaining + 1}</span>
+        <div className="shrink-0 flex items-center justify-between mb-2 bg-indigo-50/50 backdrop-blur px-3 py-1 rounded-xl border border-indigo-100/50">
+          <div className="flex items-center space-x-1">
+            <i className="fas fa-layer-group text-indigo-500 text-[10px]"></i>
+            <span className="text-[10px] font-black text-indigo-700">Hurrengoak: {sessionInfo.remaining + 1}</span>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-1">
-              <i className="fas fa-check-circle text-green-500 text-xs"></i>
-              <span className="text-xs font-black text-green-700">{sessionInfo.hits}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <i className="fas fa-times-circle text-red-400 text-xs"></i>
-              <span className="text-xs font-black text-red-700">{sessionInfo.misses}</span>
-            </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] font-bold text-green-600"><i className="fas fa-check"></i> {sessionInfo.hits}</span>
+            <span className="text-[10px] font-bold text-red-500"><i className="fas fa-times"></i> {sessionInfo.misses}</span>
           </div>
         </div>
       )}
 
-      {/* Header compact */}
-      <div className="shrink-0 text-center space-y-2 mb-4">
-        <h2 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Aurkitu honen sinonimoak:</h2>
-        <div className="flex items-center justify-center space-x-3">
-          <div className="text-3xl md:text-5xl font-black text-slate-900 drop-shadow-sm">
+      {/* Ultra Compact Header */}
+      <div className="shrink-0 text-center mb-2">
+        <span className="text-slate-400 text-[9px] font-bold uppercase tracking-widest block mb-0.5">Aurkitu sinonimoak:</span>
+        <div className="flex items-center justify-center space-x-2">
+          <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight">
             {gameState.currentWord.hitza}
-          </div>
+          </h1>
           <a 
             href={`https://hiztegiak.elhuyar.eus/eu/${gameState.currentWord.hitza}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            title="Elhuyar Hiztegian bilatu"
+            target="_blank" rel="noopener noreferrer"
             className="text-indigo-400 hover:text-indigo-600 transition-colors text-xl"
           >
             <i className="fas fa-book-open"></i>
           </a>
         </div>
-        <p className="text-slate-400 text-xs italic">
-          Guztira {correctCount} sinonimo daude.
+        <p className="text-slate-400 text-[10px] italic">
+          {correctCount} sinonimo aurkitu behar dituzu.
         </p>
       </div>
 
-      {/* Scrollable grid area if very small, but usually fits */}
-      <div className="flex-1 overflow-y-auto min-h-0 px-1 py-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
+      {/* Optimized Grid Area */}
+      <div className="flex-1 overflow-y-auto min-h-0 px-0.5 py-1 custom-scrollbar">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-2">
           {gameState.options.map((option) => {
             const isSelected = gameState.selectedIds.includes(option.id);
             const isCorrect = option.isCorrect;
             
-            let cardClasses = "relative p-3 md:p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ";
+            let cardClasses = "relative px-4 py-3 md:p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between shadow-sm ";
             
             if (!gameState.checked) {
               cardClasses += isSelected 
-                ? "border-indigo-500 bg-indigo-50 shadow-md ring-2 ring-indigo-200" 
-                : "border-slate-200 bg-white hover:border-slate-300 shadow-sm";
+                ? "border-indigo-600 bg-indigo-50 ring-1 ring-indigo-200" 
+                : "border-slate-200 bg-white hover:border-slate-300";
             } else {
               if (isCorrect) {
-                cardClasses += "border-green-500 bg-green-50 shadow-inner";
+                cardClasses += "border-green-500 bg-green-50/50";
               } else if (isSelected && !isCorrect) {
-                cardClasses += "border-red-500 bg-red-50";
+                cardClasses += "border-red-500 bg-red-50/50";
               } else {
-                cardClasses += "border-slate-100 bg-slate-50 opacity-60";
+                cardClasses += "border-slate-100 bg-slate-50 opacity-50";
               }
             }
 
             return (
-              <div 
-                key={option.id}
-                onClick={() => onOptionToggle(option.id)}
-                className={cardClasses}
-              >
-                <span className="font-semibold text-base md:text-lg">{option.text}</span>
-                <div className="flex items-center">
+              <div key={option.id} onClick={() => onOptionToggle(option.id)} className={cardClasses}>
+                <span className={`font-bold text-[16px] md:text-lg ${isSelected || (gameState.checked && isCorrect) ? 'text-slate-900' : 'text-slate-700'}`}>
+                  {option.text}
+                </span>
+                <div className="flex items-center shrink-0 ml-2">
                   {gameState.checked ? (
                     isCorrect ? (
                       <i className="fas fa-check-circle text-green-600 text-lg"></i>
@@ -161,21 +150,21 @@ const QuizView: React.FC<QuizViewProps> = ({
         </div>
       </div>
 
-      {/* Fixed Footer for Buttons and Feedback */}
-      <div className="shrink-0 pt-4 flex flex-col space-y-3 bg-slate-50">
-        <div className="flex justify-center">
+      {/* Footer and Feedback */}
+      <div className="shrink-0 pt-2 bg-slate-50 border-t border-slate-100">
+        <div className="flex justify-center mb-2">
           {!gameState.checked ? (
             <button
               onClick={onCheck}
               disabled={gameState.selectedIds.length === 0}
-              className={`w-full md:w-auto px-10 py-3 md:py-4 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95 ${gameState.selectedIds.length === 0 ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+              className={`w-full py-3.5 rounded-xl font-black text-sm text-white shadow-lg transition-all transform active:scale-95 ${gameState.selectedIds.length === 0 ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
               Egiaztatu
             </button>
           ) : (
             <button
               onClick={onNext}
-              className="w-full md:w-auto px-10 py-3 md:py-4 rounded-xl font-bold text-white bg-slate-900 shadow-lg hover:bg-slate-800 transition-all transform active:scale-95"
+              className="w-full py-3.5 rounded-xl font-black text-sm text-white bg-slate-900 shadow-lg hover:bg-slate-800 transition-all transform active:scale-95"
             >
               Hurrengoa <i className="fas fa-arrow-right ml-2"></i>
             </button>
@@ -183,24 +172,16 @@ const QuizView: React.FC<QuizViewProps> = ({
         </div>
 
         {gameState.checked && (
-          <div className={`p-3 md:p-4 rounded-xl text-center border-l-4 animate-in slide-in-from-bottom-2 duration-300 ${
+          <div className={`px-3 py-2 rounded-xl text-center border-l-4 animate-in slide-in-from-bottom-1 duration-300 ${
             isWinning ? 'bg-green-100 border-green-600 text-green-800' : 'bg-amber-100 border-amber-600 text-amber-800'
           }`}>
-            <div className="text-sm font-bold mb-1">
-              {isWinning ? 'Bikain! Asmatu duzu!' : 'Kasik! Begiratu erantzunak.'}
+            <div className="text-[10px] font-black uppercase mb-0.5 leading-none">
+              {isWinning ? 'Bikain!' : 'Sinonimoak:'}
             </div>
-            <div className="flex flex-wrap justify-center gap-x-1.5 text-[10px] md:text-xs">
-              <span className="font-bold underline decoration-indigo-300 text-indigo-900">{gameState.currentWord.hitza}:</span>
+            <div className="flex flex-wrap justify-center gap-x-1.5 text-[11px] md:text-xs font-semibold">
               {gameState.currentWord.sinonimoak.map((sin, idx) => (
                 <React.Fragment key={idx}>
-                  <a 
-                    href={`https://hiztegiak.elhuyar.eus/eu/${sin}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline decoration-dotted hover:text-indigo-600 transition-colors"
-                  >
-                    {sin}
-                  </a>
+                  <span className="text-slate-900">{sin}</span>
                   {idx < gameState.currentWord!.sinonimoak.length - 1 && <span className="opacity-40">,</span>}
                 </React.Fragment>
               ))}
@@ -208,6 +189,12 @@ const QuizView: React.FC<QuizViewProps> = ({
           </div>
         )}
       </div>
+      
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+      `}</style>
     </div>
   );
 };
