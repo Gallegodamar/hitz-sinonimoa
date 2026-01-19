@@ -9,23 +9,34 @@ export const shuffleArray = <T,>(arr: T[]): T[] => {
   return [...arr].sort(() => Math.random() - 0.5);
 };
 
-export const generateRound = (data: SynonymItem[], currentWord?: SynonymItem): { word: SynonymItem, options: Option[] } => {
-  const target = currentWord || getRandomItem(data);
+export const generateRound = (
+  pool: SynonymItem[], 
+  currentWord?: SynonymItem, 
+  distractorPool?: SynonymItem[]
+): { word: SynonymItem, options: Option[] } => {
+  const target = currentWord || getRandomItem(pool);
   const correctOnes = target.sinonimoak;
   
-  // Collect distractors
+  // Usamos el distractorPool (el diccionario completo) si se proporciona, 
+  // para asegurar que siempre haya suficientes palabras diferentes.
+  const sourceForDistractors = distractorPool || pool;
+  
   const distractors: string[] = [];
-  while (distractors.length < Math.max(4, 8 - correctOnes.length)) {
-    const randomItem = getRandomItem(data);
-    // Don't pick the target word or its synonyms as distractors
-    if (randomItem.hitza !== target.hitza && !correctOnes.includes(randomItem.hitza)) {
+  let attempts = 0;
+  const maxAttempts = 200; // Seguridad contra bucles infinitos
+
+  while (distractors.length < Math.max(4, 8 - correctOnes.length) && attempts < maxAttempts) {
+    attempts++;
+    const randomItem = getRandomItem(sourceForDistractors);
+    
+    // No elegir la palabra objetivo ni sus sinónimos como distractores
+    if (randomItem.hitza.toLowerCase() !== target.hitza.toLowerCase() && !correctOnes.includes(randomItem.hitza)) {
       const randomOption = Math.random() > 0.5 ? randomItem.hitza : getRandomItem(randomItem.sinonimoak);
+      
       if (!distractors.includes(randomOption) && !correctOnes.includes(randomOption)) {
         distractors.push(randomOption);
       }
     }
-    // Safety break for small datasets
-    if (distractors.length >= 7) break; 
   }
 
   const allOptions: Option[] = [
@@ -35,6 +46,7 @@ export const generateRound = (data: SynonymItem[], currentWord?: SynonymItem): {
 
   return {
     word: target,
+    // Barajamos y limitamos a 8 opciones máximo
     options: shuffleArray(allOptions).slice(0, 8)
   };
 };

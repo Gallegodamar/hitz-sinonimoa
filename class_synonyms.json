@@ -47,5 +47,5 @@
   { "id": "c45", "hitza": "hurbildu", "sinonimoak": ["hurreratu", "gerturatu"] },
   { "id": "c46", "hitza": "ekidin", "sinonimoak": ["saihestu"] },
   { "id": "c47", "hitza": "atzaparra", "sinonimoak": ["erpe", "atzamar"] },
-  { "id": "c48", "hitza": "seko", "sinonimoak": ["guztiz", "zeharo", "total"] }
+  { "id": "c48", "hitza": "seko", "sinonimoak": ["guztiz", "zeharo", "total" , "erabat"] }
 ]

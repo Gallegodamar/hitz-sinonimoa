@@ -3,7 +3,7 @@ export interface SynonymItem {
   id: number | string;
   hitza: string;
   sinonimoak: string[];
-  isClass?: boolean; // Nueva propiedad para identificar palabras de clase añadidas por el usuario
+  isClass?: boolean;
 }
 
 export interface GameState {
@@ -21,4 +21,6 @@ export interface Option {
   isCorrect: boolean;
 }
 
-export type ViewMode = 'quiz' | 'browse' | 'stats' | 'add' | 'class';
+export type ViewMode = 'home' | 'quiz' | 'browse' | 'stats' | 'add' | 'class';
+
+export type ClassSubMode = 'first' | 'second' | 'all';
