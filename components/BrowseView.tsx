@@ -44,7 +44,7 @@ const BrowseView: React.FC<BrowseViewProps> = ({ data, onPractice, onEdit }) => 
                   <div className="flex items-center space-x-2">
                     <h3 className="text-lg font-bold text-slate-800 leading-tight">{item.hitza}</h3>
                     <a 
-                      href={`https://hiztegiak.elhuyar.eus/eu/${item.hitza}`} 
+                      href={`https://hiztegiak.elhuyar.eus/eu_es/${item.hitza}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-slate-300 hover:text-indigo-500 transition-colors"
@@ -55,15 +55,15 @@ const BrowseView: React.FC<BrowseViewProps> = ({ data, onPractice, onEdit }) => 
                   <div className="flex space-x-1">
                     <button 
                       onClick={() => onEdit(item)}
-                      className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md hover:bg-slate-100"
+                      className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md hover:bg-amber-100 transition-colors border border-amber-100"
                     >
-                      Edit
+                      <i className="fas fa-edit mr-1"></i> Edit
                     </button>
                     <button 
                       onClick={() => onPractice(item)}
-                      className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md hover:bg-indigo-100"
+                      className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md hover:bg-indigo-100 transition-colors border border-indigo-100"
                     >
-                      Play
+                      <i className="fas fa-play mr-1"></i> Play
                     </button>
                   </div>
                 </div>
