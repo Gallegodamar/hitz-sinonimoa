@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { GameState, ViewMode, SynonymItem, ClassSubMode } from './types';
 import { generateRound, shuffleArray } from './utils';
+import { ALL_SYNONYMS, CLASS_LIST_1, CLASS_LIST_2 } from './data';
 import QuizView from './components/QuizView';
 import BrowseView from './components/BrowseView';
 import StatsView from './components/StatsView';
@@ -12,12 +13,8 @@ import HomeView from './components/HomeView';
 const App: React.FC = () => {
   const [view, setView] = useState<ViewMode>('home');
   const [classSubMode, setClassSubMode] = useState<ClassSubMode>('all');
-  const [staticData, setStaticData] = useState<SynonymItem[]>([]);
-  const [staticClassData1, setStaticClassData1] = useState<SynonymItem[]>([]);
-  const [staticClassData2, setStaticClassData2] = useState<SynonymItem[]>([]);
   const [localData, setLocalData] = useState<SynonymItem[]>([]);
   const [editingWord, setEditingWord] = useState<SynonymItem | null>(null);
-  const [loading, setLoading] = useState(true);
   
   const [classQueue, setClassQueue] = useState<SynonymItem[]>([]);
   const [classSessionStats, setClassSessionStats] = useState({ hits: 0, misses: 0, totalSession: 0 });
@@ -31,63 +28,46 @@ const App: React.FC = () => {
     selectedIds: []
   });
 
+  // Cargar datos locales guardados por el usuario
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [resAll, resClass1, resClass2] = await Promise.all([
-          fetch('./synonyms.json'),
-          fetch('./class_synonyms.json'),
-          fetch('./class_synonyms_2.json')
-        ]);
-        
-        const dataAll = (await resAll.json()) as SynonymItem[];
-        const dataClass1 = (await resClass1.json()) as SynonymItem[];
-        const dataClass2 = (await resClass2.json()) as SynonymItem[];
-        
-        setStaticData(dataAll);
-        setStaticClassData1(dataClass1);
-        setStaticClassData2(dataClass2);
-
-        const saved = localStorage.getItem('user_synonyms');
-        if (saved) {
-          setLocalData(JSON.parse(saved) as SynonymItem[]);
-        }
-      } catch (e) {
-        console.error("Datuak kargatzean errorea:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+    const saved = localStorage.getItem('user_synonyms');
+    if (saved) {
+      setLocalData(JSON.parse(saved) as SynonymItem[]);
+    }
   }, []);
 
+  // Pool de todas las palabras (estáticas + locales)
   const allWordsPool = useMemo(() => {
     const poolMap = new Map<string, SynonymItem>();
-    staticData.forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
-    staticClassData1.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
-    staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+    ALL_SYNONYMS.forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
+    CLASS_LIST_1.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+    CLASS_LIST_2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
     localData.forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
     return Array.from(poolMap.values());
-  }, [staticData, staticClassData1, staticClassData2, localData]);
+  }, [localData]);
 
+  // Pool específico para los modos escolares
   const currentClassPool = useMemo(() => {
     if (classSubMode === 'first') {
-      return staticClassData1.map(item => ({ ...item, isClass: true }));
+      return CLASS_LIST_1;
     }
     
     if (classSubMode === 'second') {
       const poolMap = new Map<string, SynonymItem>();
-      staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+      // Lista 2 de las imágenes
+      CLASS_LIST_2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+      // Palabras del usuario marcadas como escolares
       localData.filter(i => i.isClass).forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
       return Array.from(poolMap.values());
     }
 
+    // "Zerrenda osoa" (Lista 1 + Lista 2 + Escolares locales)
     const poolMap = new Map<string, SynonymItem>();
-    staticClassData1.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
-    staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+    CLASS_LIST_1.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+    CLASS_LIST_2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
     localData.filter(i => i.isClass).forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
     return Array.from(poolMap.values());
-  }, [staticClassData1, staticClassData2, localData, classSubMode]);
+  }, [localData, classSubMode]);
 
   const startNewRound = useCallback((specificWord?: SynonymItem) => {
     let targetWord: SynonymItem | undefined = specificWord;
@@ -106,6 +86,7 @@ const App: React.FC = () => {
 
     if (targetPool.length === 0 && !targetWord) return;
 
+    // Usamos allWordsPool para distractores para que siempre haya suficientes opciones incluso en listas cortas
     const { word, options } = generateRound(targetPool, targetWord, allWordsPool);
     
     setGameState(prev => ({
@@ -120,16 +101,16 @@ const App: React.FC = () => {
   const initClassSession = useCallback((subMode: ClassSubMode) => {
     let pool: SynonymItem[] = [];
     if (subMode === 'first') {
-      pool = staticClassData1.map(item => ({ ...item, isClass: true }));
+      pool = CLASS_LIST_1;
     } else if (subMode === 'second') {
       const poolMap = new Map<string, SynonymItem>();
-      staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+      CLASS_LIST_2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
       localData.filter(i => i.isClass).forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
       pool = Array.from(poolMap.values());
     } else {
       const poolMap = new Map<string, SynonymItem>();
-      staticClassData1.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
-      staticClassData2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+      CLASS_LIST_1.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
+      CLASS_LIST_2.forEach(item => poolMap.set(item.hitza.toLowerCase(), { ...item, isClass: true }));
       localData.filter(i => i.isClass).forEach(item => poolMap.set(item.hitza.toLowerCase(), item));
       pool = Array.from(poolMap.values());
     }
@@ -154,7 +135,7 @@ const App: React.FC = () => {
       checked: false,
       selectedIds: []
     }));
-  }, [staticClassData1, staticClassData2, localData, allWordsPool]);
+  }, [localData, allWordsPool]);
 
   useEffect(() => {
     if (view === 'quiz') {
@@ -216,15 +197,6 @@ const App: React.FC = () => {
     setView('browse');
     setEditingWord(null);
   };
-
-  if (loading) {
-    return (
-      <div className="h-dvh w-screen bg-white flex flex-col items-center justify-center">
-        <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-400 font-bold text-sm tracking-widest uppercase">Kargatzen...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="h-dvh flex flex-col bg-slate-50 overflow-hidden font-sans">
