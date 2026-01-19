@@ -11,12 +11,11 @@ import Navbar from './components/Navbar';
 const App: React.FC = () => {
   const [view, setView] = useState<ViewMode>('quiz');
   const [staticData, setStaticData] = useState<SynonymItem[]>([]);
-  const [classData, setClassData] = useState<SynonymItem[]>([]);
+  const [staticClassData, setStaticClassData] = useState<SynonymItem[]>([]);
   const [localData, setLocalData] = useState<SynonymItem[]>([]);
   const [editingWord, setEditingWord] = useState<SynonymItem | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Class mode session state
   const [classQueue, setClassQueue] = useState<SynonymItem[]>([]);
   const [classSessionStats, setClassSessionStats] = useState({ hits: 0, misses: 0, totalSession: 0 });
 
@@ -29,7 +28,6 @@ const App: React.FC = () => {
     selectedIds: []
   });
 
-  // Load external JSONs and local storage
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -42,7 +40,7 @@ const App: React.FC = () => {
         const dataClass = (await resClass.json()) as SynonymItem[];
         
         setStaticData(dataAll);
-        setClassData(dataClass);
+        setStaticClassData(dataClass);
 
         const saved = localStorage.getItem('user_synonyms');
         if (saved) {
@@ -54,7 +52,6 @@ const App: React.FC = () => {
         setLoading(false);
       }
     };
-    
     loadData();
   }, []);
 
@@ -72,19 +69,24 @@ const App: React.FC = () => {
     return merged;
   }, [staticData, localData]);
 
+  // Combined class data (Static + User added class words)
+  const currentClassPool = useMemo(() => {
+    const userClassWords = localData.filter(item => item.isClass);
+    return [...staticClassData, ...userClassWords];
+  }, [staticClassData, localData]);
+
   const startNewRound = useCallback((specificWord?: SynonymItem) => {
     let targetWord: SynonymItem | undefined = specificWord;
     let pool = allWords;
 
     if (view === 'class') {
-      pool = classData;
+      pool = currentClassPool;
       if (!targetWord) {
         if (classQueue.length > 0) {
           const newQueue = [...classQueue];
-          targetWord = newQueue.shift();
+          targetWord = newQueue.shift() as SynonymItem;
           setClassQueue(newQueue);
         } else {
-          // Sesión terminada
           setGameState(prev => ({ ...prev, currentWord: null }));
           return;
         }
@@ -101,17 +103,16 @@ const App: React.FC = () => {
       checked: false,
       selectedIds: []
     }));
-  }, [allWords, classData, classQueue, view]);
+  }, [allWords, currentClassPool, classQueue, view]);
 
-  // Initialize class session: Shuffle everything and start first word
   const initClassSession = useCallback(() => {
-    if (classData.length === 0) return;
-    const shuffled = shuffleArray(classData);
-    const first = shuffled.shift()!;
+    if (currentClassPool.length === 0) return;
+    const shuffled = shuffleArray(currentClassPool);
+    const first = shuffled.shift() as SynonymItem;
     setClassQueue(shuffled);
-    setClassSessionStats({ hits: 0, misses: 0, totalSession: classData.length });
+    setClassSessionStats({ hits: 0, misses: 0, totalSession: currentClassPool.length });
     
-    const { word, options } = generateRound(classData, first);
+    const { word, options } = generateRound(currentClassPool, first);
     setGameState(prev => ({
       ...prev,
       currentWord: word,
@@ -119,16 +120,15 @@ const App: React.FC = () => {
       checked: false,
       selectedIds: []
     }));
-  }, [classData]);
+  }, [currentClassPool]);
 
-  // View switch handling
   useEffect(() => {
     if (view === 'class') {
       initClassSession();
     } else if (view === 'quiz') {
       startNewRound();
     }
-  }, [view, initClassSession]);
+  }, [view]);
 
   const handleOptionToggle = (id: string) => {
     if (gameState.checked) return;
@@ -164,15 +164,16 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleSaveWord = (word: string, synonyms: string[]) => {
+  const handleSaveWord = (word: string, synonyms: string[], isClass: boolean) => {
     const newItem: SynonymItem = {
-      id: Date.now().toString(),
+      id: editingWord?.id || Date.now().toString(),
       hitza: word.trim(),
-      sinonimoak: synonyms.map(s => s.trim()).filter(s => s !== "")
+      sinonimoak: synonyms.map(s => s.trim()).filter(s => s !== ""),
+      isClass: isClass
     };
 
     const updatedLocal = [...localData];
-    const existingIndex = updatedLocal.findIndex(i => i.hitza.toLowerCase() === newItem.hitza.toLowerCase());
+    const existingIndex = updatedLocal.findIndex(i => i.id === newItem.id);
     
     if (existingIndex !== -1) {
       updatedLocal[existingIndex] = newItem;
@@ -200,7 +201,7 @@ const App: React.FC = () => {
       <Navbar currentView={view} setView={(v) => { setView(v); setEditingWord(null); }} />
       
       <main className="flex-1 overflow-hidden flex flex-col relative">
-        <div className="flex-1 w-full max-w-4xl mx-auto flex flex-col px-4 pt-4 pb-20 md:pb-4 overflow-hidden">
+        <div className="flex-1 w-full max-w-4xl mx-auto flex flex-col px-3 md:px-4 pt-2 md:pt-4 pb-2 md:pb-4 overflow-hidden">
           {(view === 'quiz' || view === 'class') && (
             <QuizView 
               gameState={gameState}
@@ -249,42 +250,26 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Mobile persistent navigation */}
-      <div className="md:hidden flex shrink-0 bg-white border-t border-slate-200 justify-around py-3 z-50">
-        <button 
-          onClick={() => setView('quiz')}
-          className={`flex flex-col items-center space-y-1 transition-colors ${view === 'quiz' ? 'text-indigo-600' : 'text-slate-400'}`}
-        >
-          <i className="fas fa-gamepad text-lg"></i>
-          <span className="text-[10px] font-bold">Denak</span>
+      <div className="md:hidden flex shrink-0 bg-white border-t border-slate-200 justify-around py-2 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+        <button onClick={() => setView('quiz')} className={`flex flex-col items-center space-y-0.5 ${view === 'quiz' ? 'text-indigo-600' : 'text-slate-400'}`}>
+          <i className="fas fa-gamepad text-base"></i>
+          <span className="text-[9px] font-bold">Denak</span>
         </button>
-        <button 
-          onClick={() => setView('class')}
-          className={`flex flex-col items-center space-y-1 transition-colors ${view === 'class' ? 'text-amber-600' : 'text-slate-400'}`}
-        >
-          <i className="fas fa-graduation-cap text-lg"></i>
-          <span className="text-[10px] font-bold">Klasekoak</span>
+        <button onClick={() => setView('class')} className={`flex flex-col items-center space-y-0.5 ${view === 'class' ? 'text-amber-600' : 'text-slate-400'}`}>
+          <i className="fas fa-graduation-cap text-base"></i>
+          <span className="text-[9px] font-bold">Klasekoak</span>
         </button>
-        <button 
-          onClick={() => setView('browse')}
-          className={`flex flex-col items-center space-y-1 transition-colors ${view === 'browse' ? 'text-indigo-600' : 'text-slate-400'}`}
-        >
-          <i className="fas fa-search text-lg"></i>
-          <span className="text-[10px] font-bold">Bilatu</span>
+        <button onClick={() => setView('browse')} className={`flex flex-col items-center space-y-0.5 ${view === 'browse' ? 'text-indigo-600' : 'text-slate-400'}`}>
+          <i className="fas fa-search text-base"></i>
+          <span className="text-[9px] font-bold">Zerrenda</span>
         </button>
-        <button 
-          onClick={() => { setView('add'); setEditingWord(null); }}
-          className={`flex flex-col items-center space-y-1 transition-colors ${view === 'add' ? 'text-indigo-600' : 'text-slate-400'}`}
-        >
-          <i className="fas fa-plus-circle text-lg"></i>
-          <span className="text-[10px] font-bold">Gehitu</span>
+        <button onClick={() => { setView('add'); setEditingWord(null); }} className={`flex flex-col items-center space-y-0.5 ${view === 'add' ? 'text-indigo-600' : 'text-slate-400'}`}>
+          <i className="fas fa-plus-circle text-base"></i>
+          <span className="text-[9px] font-bold">Gehitu</span>
         </button>
-        <button 
-          onClick={() => setView('stats')}
-          className={`flex flex-col items-center space-y-1 transition-colors ${view === 'stats' ? 'text-indigo-600' : 'text-slate-400'}`}
-        >
-          <i className="fas fa-chart-pie text-lg"></i>
-          <span className="text-[10px] font-bold">Estat.</span>
+        <button onClick={() => setView('stats')} className={`flex flex-col items-center space-y-0.5 ${view === 'stats' ? 'text-indigo-600' : 'text-slate-400'}`}>
+          <i className="fas fa-chart-pie text-base"></i>
+          <span className="text-[9px] font-bold">Estat.</span>
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@ export interface SynonymItem {
   id: number | string;
   hitza: string;
   sinonimoak: string[];
+  isClass?: boolean; // Nueva propiedad para identificar palabras de clase añadidas por el usuario
 }
 
 export interface GameState {
