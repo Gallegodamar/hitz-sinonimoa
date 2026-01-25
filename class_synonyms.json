@@ -47,5 +47,27 @@
   { "id": "c45", "hitza": "hurbildu", "sinonimoak": ["hurreratu", "gerturatu"] },
   { "id": "c46", "hitza": "ekidin", "sinonimoak": ["saihestu"] },
   { "id": "c47", "hitza": "atzaparra", "sinonimoak": ["erpe", "atzamar"] },
-  { "id": "c48", "hitza": "seko", "sinonimoak": ["guztiz", "zeharo", "total" , "erabat"] }
+  { "id": "c48", "hitza": "seko", "sinonimoak": ["guztiz", "zeharo", "total" , "erabat"] },
+  { "id": "c49", "hitza": "irla", "sinonimoak": ["uharte"] }
+  { "id": "c50", "hitza": "oroitu", "sinonimoak": ["gogoratu", "gomutatu", "gogoan izan"] }
+  { "id": "c51", "hitza": "izaera", "sinonimoak": ["aiurri", "nortasun", "seta"] }
+  { "id": "c52", "hitza": "gaitzetsi", "sinonimoak": ["ezetsi", "hastandu"] }
+  { "id": "c53", "hitza": "ortu", "sinonimoak": ["baratze"] }
+  { "id": "c54", "hitza": "eltze", "sinonimoak": ["lapiko", "tupina"] }
+  { "id": "c55", "hitza": "kapela", "sinonimoak": ["txano"] }
+  { "id": "c56", "hitza": "mediku", "sinonimoak": ["sendagile", "osagile", "osatzaile"] }
+  { "id": "c57", "hitza": "oski", "sinonimoak": ["zapata"] }
+  { "id": "c58", "hitza": "goraintzi", "sinonimoak": ["eskumuin"] }
+  { "id": "c59", "hitza": "zama", "sinonimoak": ["karga", "haxe"] }
+  { "id": "c60", "hitza": "eserleku", "sinonimoak": ["jarleku", "jesarleku", "esertoki"] }
+  { "id": "c61", "hitza": "arraro", "sinonimoak": ["bitxi", "arrotz"] }
+  { "id": "c62", "hitza": "ezezaguna", "sinonimoak": ["arrotz"] }
+  { "id": "c63", "hitza": "familia", "sinonimoak": ["sendi", "senitarte"] }
+  { "id": "c64", "hitza": "ezkutatu", "sinonimoak": ["ostendu"] }
+  { "id": "c65", "hitza": "hondatu", "sinonimoak": ["suntsitu", "erraustu", "txikitu"] }
+  { "id": "c66", "hitza": "beti", "sinonimoak": ["betiere", "aldiro", "une oro", "aldi oro"] }
+  { "id": "c67", "hitza": "salto egin", "sinonimoak": ["jauzi egin", "saltatu"] }
+  { "id": "c68", "hitza": "begiratu", "sinonimoak": ["behatu", "so egin"] }
+  { "id": "c69", "hitza": "indarkeria", "sinonimoak": ["bortxakeria", "gogorkeria", "biolentzia"] }
+  { "id": "c70", "hitza": "bide batez", "sinonimoak": ["bidenabar", "bidez"] }
 ]
